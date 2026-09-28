@@ -66,6 +66,7 @@
   .pill[data-on="karen"].active{border-color:var(--karen);background:#fdecec;color:var(--karen)}
   .pill[data-on="andres"].active{border-color:var(--andres);background:#eef0f2;color:var(--andres)}
   .pill[data-on="ingreso"].active{border-color:var(--ingreso);background:#e9f6ee;color:var(--ingreso)}
+  .pill[data-on="gasto"].active{border-color:var(--rojo);background:#fdecec;color:var(--rojo)}
   .pill[data-on="costo"].active{border-color:var(--costo);background:#fdecec;color:var(--costo)}
   .pill[data-on="nequi"].active{border-color:var(--nequi);background:#f2e9fd;color:var(--nequi)}
   .pill[data-on="efectivo"].active{border-color:var(--efectivo);background:#e6f5ef;color:var(--efectivo)}
@@ -84,7 +85,7 @@
   .badge{display:inline-block;padding:3px 9px;border-radius:14px;font-size:.72rem;font-weight:700}
   .badge.karen{background:#fdecec;color:var(--karen)}.badge.andres{background:#eef0f2;color:var(--andres)}
   .badge.conjunto{background:#eaf1fa;color:#2563a8}
-  .badge.ingreso{background:#e9f6ee;color:var(--ingreso)}.badge.costo{background:#fdecec;color:var(--costo)}
+  .badge.ingreso{background:#e9f6ee;color:var(--ingreso)}.badge.costo{background:#fdecec;color:var(--costo)}.badge.gasto{background:#f0f2f4;color:var(--gris)}
   .badge.nequi{background:#f2e9fd;color:var(--nequi)}.badge.efectivo{background:#e6f5ef;color:var(--efectivo)}
   .cat-tag{display:inline-block;background:#f0f2f4;color:var(--gris);padding:2px 8px;border-radius:6px;font-size:.74rem;font-weight:600}
   .obs{color:var(--muted);font-size:.82rem}
@@ -236,34 +237,33 @@
   <section id="v-registro" class="view active">
     <div class="kpis" id="kpis"></div>
     <div class="card">
-      <div class="card-h"><span class="ic">＋</span> Registrar gasto</div>
+      <div class="card-h"><span class="ic">＋</span> Registrar movimiento personal</div>
       <div class="card-b">
         <div class="field full">
-          <label>Agregador (quién pagó)</label>
+          <label>Persona</label>
           <div class="pills" id="aggPills">
-            <div class="pill" data-on="karen">KAREN<span class="tag">Gasto personal</span></div>
-            <div class="pill" data-on="andres">ANDRÉS<span class="tag">Gasto personal</span></div>
+            <div class="pill" data-on="karen">KAREN</div>
+            <div class="pill" data-on="andres">ANDRÉS</div>
+          </div>
+        </div>
+        <div style="height:14px"></div>
+        <div class="field full">
+          <label>Tipo de movimiento</label>
+          <div class="pills" id="tipoPills">
+            <div class="pill active" data-on="gasto">GASTO<span class="tag">Sale dinero</span></div>
+            <div class="pill" data-on="ingreso">INGRESO<span class="tag">Entra dinero</span></div>
           </div>
         </div>
         <div style="height:14px"></div>
         <div class="form-grid">
           <div class="field"><label>Fecha</label><input type="date" id="fFecha"></div>
           <div class="field"><label>Categoría</label>
-            <select id="fCat" onchange="toggleCatOtra()">
-              <option value="">Seleccionar…</option>
-              <option>Alimentación</option><option>Transporte / Movilidad</option>
-              <option>Servicios públicos</option><option>Papelería / Oficina</option>
-              <option>Tecnología / Equipos</option><option>Comunicaciones</option>
-              <option>Viáticos</option><option>Capacitación</option>
-              <option>Mantenimiento / Aseo</option><option>Cafetería</option>
-              <option>Eventos</option><option>Arriendo</option><option>Negocio</option>
-              <option value="__otra">Otra (especificar)…</option>
-            </select>
+            <select id="fCat" onchange="toggleCatOtra()"></select>
           </div>
           <div class="field" id="catOtraWrap" style="display:none"><label>Categoría personalizada</label><input type="text" id="fCatOtra" placeholder="Escribir categoría"></div>
           <div class="field"><label>Valor (COP)</label><input type="text" id="fValor" inputmode="numeric" placeholder="$ 0" oninput="fmtValor(this)"></div>
-          <div class="field full"><label>Observación</label><textarea id="fObs" placeholder="Detalle / descripción del gasto realizado"></textarea></div>
-          <div class="field"><button class="btn btn-rojo" id="btnGuardar" onclick="guardar()" style="width:100%;justify-content:center;padding:11px">Agregar gasto</button></div>
+          <div class="field full"><label>Observación</label><textarea id="fObs" placeholder="Detalle / descripción del movimiento"></textarea></div>
+          <div class="field"><button class="btn btn-rojo" id="btnGuardar" onclick="guardar()" style="width:100%;justify-content:center;padding:11px">Agregar movimiento</button></div>
           <div class="field"><button class="btn btn-gris" id="btnCancelar" onclick="cancelarEdicion()" style="width:100%;justify-content:center;padding:11px;display:none">Cancelar edición</button></div>
         </div>
       </div>
@@ -275,12 +275,16 @@
         <span class="chip active" data-f="todos" onclick="setFiltro('todos',this)">Todos</span>
         <span class="chip" data-f="karen" onclick="setFiltro('karen',this)">Karen</span>
         <span class="chip" data-f="andres" onclick="setFiltro('andres',this)">Andrés</span>
+        <span style="width:1px;height:20px;background:var(--linea);margin:0 4px"></span>
+        <span class="chip active" data-t="todos" onclick="setFiltroTipo('todos',this)">Gastos + Ingresos</span>
+        <span class="chip" data-t="gasto" onclick="setFiltroTipo('gasto',this)">Solo gastos</span>
+        <span class="chip" data-t="ingreso" onclick="setFiltroTipo('ingreso',this)">Solo ingresos</span>
         <input type="text" id="buscar" placeholder="Buscar categoría u observación…" oninput="render()" style="max-width:260px;margin-left:auto">
       </div>
       <div class="tbl-wrap"><table id="tabla">
         <thead><tr>
-          <th onclick="ordenar('fecha')">Fecha</th><th onclick="ordenar('agg')">Agregador</th>
-          <th onclick="ordenar('cat')">Categoría</th><th>Observación</th>
+          <th onclick="ordenar('fecha')">Fecha</th><th onclick="ordenar('agg')">Persona</th>
+          <th onclick="ordenar('tipo')">Tipo</th><th onclick="ordenar('cat')">Categoría</th><th>Observación</th>
           <th class="num" onclick="ordenar('valor')">Valor</th><th style="width:80px">Acción</th>
         </tr></thead>
         <tbody id="tbody"></tbody><tfoot id="tfoot"></tfoot>
@@ -295,6 +299,10 @@
       <div class="res-bar">
         <div><span class="lbl">Período:</span>
           <select id="resMes" onchange="mesSel=this.value;renderResumen()" style="display:inline-block;width:auto;margin-left:8px"></select>
+          <span class="lbl" style="margin-left:16px">Persona:</span>
+          <select id="resPersona" onchange="personaSel=this.value;renderResumen()" style="display:inline-block;width:auto;margin-left:8px">
+            <option value="todos">Karen y Andrés</option><option value="karen">Solo Karen</option><option value="andres">Solo Andrés</option>
+          </select>
         </div>
         <button class="btn btn-gris btn-sm" onclick="imprimirResumen()">🖨 Imprimir informe</button>
       </div>
@@ -435,7 +443,7 @@ const KEY='gastos_compartidos_groupcos_v1';
 const NKEY='negocio_groupcos_v1';
 const AGG={karen:'KAREN',andres:'ANDRÉS',conjunto:'CONJUNTO'};
 let data=[], negocio=[];
-let aggSel='', filtro='todos', mesSel='todos', editId=null;
+let aggSel='', tipoSel='gasto', filtro='todos', filtroTipo='todos', mesSel='todos', personaSel='todos', editId=null;
 let sortKey='fecha', sortDir=-1;
 let negTipo='', negMedio='', negEditId=null, negFiltro='todos', negMesSel='todos';
 
@@ -481,18 +489,32 @@ document.getElementById('aggPills').addEventListener('click',e=>{
   document.querySelectorAll('#aggPills .pill').forEach(x=>x.classList.remove('active'));
   p.classList.add('active'); aggSel=p.dataset.on;
 });
+const CAT_GASTO=['Alimentación','Servicios públicos','Tecnología / Equipos','Comunicaciones','Mantenimiento / Aseo','Eventos','Arriendo','Gasolina','Suplementación','Crédito Hipotecario','Administración','Mascotas'];
+const CAT_INGRESO=['Salario','Honorarios','Bonificación / Prima','Otros ingresos'];
+function tipoDe(x){return x.tipo==='ingreso'?'ingreso':'gasto'}
+function pintarCats(tipo,keep){
+  const sel=document.getElementById('fCat'); const prev=keep?sel.value:'';
+  const lista=tipo==='ingreso'?CAT_INGRESO:CAT_GASTO;
+  sel.innerHTML='<option value="">Seleccionar…</option>'+lista.map(c=>`<option>${c}</option>`).join('')+'<option value="__otra">Otra (especificar)…</option>';
+  if(prev&&[...sel.options].some(o=>o.value===prev))sel.value=prev;
+}
+document.getElementById('tipoPills').addEventListener('click',e=>{
+  const p=e.target.closest('.pill'); if(!p)return;
+  document.querySelectorAll('#tipoPills .pill').forEach(x=>x.classList.remove('active'));
+  p.classList.add('active'); tipoSel=p.dataset.on; pintarCats(tipoSel,false); toggleCatOtra();
+});
 function toggleCatOtra(){document.getElementById('catOtraWrap').style.display=document.getElementById('fCat').value==='__otra'?'flex':'none'}
 function getCat(){const v=document.getElementById('fCat').value;return v==='__otra'?document.getElementById('fCatOtra').value.trim():v}
 function guardar(){
   const fecha=document.getElementById('fFecha').value||hoy();
   const cat=getCat(), valor=parseNum(document.getElementById('fValor').value), obs=document.getElementById('fObs').value.trim();
-  if(!aggSel){toast('⚠ Selecciona un agregador');return}
+  if(!aggSel){toast('⚠ Selecciona la persona');return}
   if(!cat){toast('⚠ Indica la categoría');return}
   if(!valor){toast('⚠ Ingresa un valor mayor a 0');return}
   let rec;
-  if(editId){rec=data.find(x=>x.id===editId);Object.assign(rec,{agg:aggSel,fecha,cat,valor,obs,ts:Date.now()});toast('✔ Movimiento actualizado');editId=null;
-    document.getElementById('btnGuardar').textContent='Agregar gasto';document.getElementById('btnCancelar').style.display='none';}
-  else{rec={id:uid(),agg:aggSel,fecha,cat,valor,obs,ts:Date.now()};data.push(rec);toast('✔ Gasto registrado');}
+  if(editId){rec=data.find(x=>x.id===editId);Object.assign(rec,{agg:aggSel,tipo:tipoSel,fecha,cat,valor,obs,ts:Date.now()});toast('✔ Movimiento actualizado');editId=null;
+    document.getElementById('btnGuardar').textContent='Agregar movimiento';document.getElementById('btnCancelar').style.display='none';}
+  else{rec={id:uid(),agg:aggSel,tipo:tipoSel,fecha,cat,valor,obs,ts:Date.now()};data.push(rec);toast(tipoSel==='ingreso'?'✔ Ingreso registrado':'✔ Gasto registrado');}
   save(); limpiar(); render();
   if(cloudOn()) enqueue({t:'upsert',r:rec});
 }
@@ -501,10 +523,12 @@ function limpiar(){
   document.getElementById('catOtraWrap').style.display='none';
   document.getElementById('fFecha').value=hoy();
   document.querySelectorAll('#aggPills .pill').forEach(x=>x.classList.remove('active')); aggSel='';
+  tipoSel='gasto'; document.querySelectorAll('#tipoPills .pill').forEach(x=>x.classList.toggle('active',x.dataset.on==='gasto')); pintarCats('gasto',false);
 }
 function editar(id){
-  const it=data.find(x=>x.id===id); if(!it)return; editId=id; aggSel=it.agg;
+  const it=data.find(x=>x.id===id); if(!it)return; editId=id; aggSel=it.agg; tipoSel=tipoDe(it);
   document.querySelectorAll('#aggPills .pill').forEach(x=>x.classList.toggle('active',x.dataset.on===it.agg));
+  document.querySelectorAll('#tipoPills .pill').forEach(x=>x.classList.toggle('active',x.dataset.on===tipoSel)); pintarCats(tipoSel,false);
   document.getElementById('fFecha').value=it.fecha;
   document.getElementById('fValor').value='$ '+it.valor.toLocaleString('es-CO');
   document.getElementById('fObs').value=it.obs;
@@ -515,7 +539,7 @@ function editar(id){
   document.getElementById('btnCancelar').style.display='block';
   document.querySelector('.tab[data-v="registro"]').click();
 }
-function cancelarEdicion(){editId=null;limpiar();document.getElementById('btnGuardar').textContent='Agregar gasto';document.getElementById('btnCancelar').style.display='none';}
+function cancelarEdicion(){editId=null;limpiar();document.getElementById('btnGuardar').textContent='Agregar movimiento';document.getElementById('btnCancelar').style.display='none';}
 function borrar(id){
   if(!confirm('¿Eliminar este movimiento?'))return;
   data=data.filter(x=>x.id!==id); save(); render(); toast('🗑 Movimiento eliminado');
@@ -524,41 +548,49 @@ function borrar(id){
 
 /* ================= GASTOS: filtros / totales / render ================= */
 function setFiltro(f,el){filtro=f;document.querySelectorAll('.filters .chip[data-f]').forEach(c=>c.classList.remove('active'));el.classList.add('active');render();}
+function setFiltroTipo(f,el){filtroTipo=f;document.querySelectorAll('.filters .chip[data-t]').forEach(c=>c.classList.remove('active'));el.classList.add('active');render();}
 function ordenar(k){if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1}render();}
 function esGasto(x){return x.agg==='karen'||x.agg==='andres'}
+function esEgreso(x){return esGasto(x)&&tipoDe(x)==='gasto'}
+function esIngreso(x){return esGasto(x)&&tipoDe(x)==='ingreso'}
 function visibles(){
   const q=document.getElementById('buscar').value.toLowerCase().trim();
   let r=data.filter(x=>filtro==='todos'?esGasto(x):x.agg===filtro);
+  if(filtroTipo!=='todos')r=r.filter(x=>tipoDe(x)===filtroTipo);
   if(q)r=r.filter(x=>(x.cat+' '+x.obs).toLowerCase().includes(q));
   r.sort((a,b)=>{let va=a[sortKey],vb=b[sortKey];
-    if(sortKey==='valor'){va=a.valor;vb=b.valor}else if(sortKey==='agg'){va=AGG[a.agg];vb=AGG[b.agg]}else if(sortKey==='cat'){va=a.cat;vb=b.cat}
+    if(sortKey==='valor'){va=a.valor;vb=b.valor}else if(sortKey==='agg'){va=AGG[a.agg];vb=AGG[b.agg]}else if(sortKey==='cat'){va=a.cat;vb=b.cat}else if(sortKey==='tipo'){va=tipoDe(a);vb=tipoDe(b)}
     if(va<vb)return -1*sortDir;if(va>vb)return 1*sortDir;return 0;});
   return r;
 }
 function totales(){
-  const t={karen:0,andres:0,total:0,n:{karen:0,andres:0}};
-  data.forEach(x=>{if(!esGasto(x))return;t[x.agg]+=x.valor;t.total+=x.valor;t.n[x.agg]++;});
+  const t={karen:0,andres:0,total:0,n:{karen:0,andres:0},ing:{karen:0,andres:0,total:0,n:{karen:0,andres:0}}};
+  data.forEach(x=>{if(!esGasto(x))return;
+    if(tipoDe(x)==='ingreso'){t.ing[x.agg]+=x.valor;t.ing.total+=x.valor;t.ing.n[x.agg]++;}
+    else{t[x.agg]+=x.valor;t.total+=x.valor;t.n[x.agg]++;}});
   return t;
 }
 function render(){
   if(typeof renderResumen==='function')renderResumen();
   const t=totales();
+  const neto=(g,i)=>`Ingresos <b style="color:var(--ingreso)">${money(i)}</b> · Neto <b>${money(i-g)}</b>`;
   document.getElementById('kpis').innerHTML=`
-    <div class="kpi karen"><div class="lab">Karen</div><div class="val">${money(t.karen)}</div><div class="cnt">${t.n.karen} movimiento(s)</div></div>
-    <div class="kpi andres"><div class="lab">Andrés</div><div class="val">${money(t.andres)}</div><div class="cnt">${t.n.andres} movimiento(s)</div></div>
-    <div class="kpi total"><div class="lab">Total general</div><div class="val">${money(t.total)}</div><div class="cnt">${t.n.karen+t.n.andres} movimiento(s)</div></div>`;
+    <div class="kpi karen"><div class="lab">Karen · gastos</div><div class="val">${money(t.karen)}</div><div class="cnt">${neto(t.karen,t.ing.karen)}</div></div>
+    <div class="kpi andres"><div class="lab">Andrés · gastos</div><div class="val">${money(t.andres)}</div><div class="cnt">${neto(t.andres,t.ing.andres)}</div></div>
+    <div class="kpi total"><div class="lab">Total gastos</div><div class="val">${money(t.total)}</div><div class="cnt">Ingresos ${money(t.ing.total)} · Neto ${money(t.ing.total-t.total)}</div></div>`;
   const rows=visibles(), tb=document.getElementById('tbody'), tf=document.getElementById('tfoot');
-  if(rows.length===0){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="big">🧾</div>Sin movimientos para mostrar.<br>Registra el primer gasto en el formulario.</div></td></tr>`;tf.innerHTML='';return;}
+  if(rows.length===0){tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="big">🧾</div>Sin movimientos para mostrar.<br>Registra el primer movimiento en el formulario.</div></td></tr>`;tf.innerHTML='';return;}
   tb.innerHTML=rows.map(x=>`<tr>
       <td style="white-space:nowrap">${fechaCO(x.fecha)}</td>
       <td><span class="badge ${x.agg}">${AGG[x.agg]||x.agg}</span></td>
+      <td><span class="badge ${tipoDe(x)}">${tipoDe(x)==='ingreso'?'INGRESO':'GASTO'}</span></td>
       <td><span class="cat-tag">${esc(x.cat)}</span></td>
       <td class="obs">${esc(x.obs)||'—'}</td>
-      <td class="num">${money(x.valor)}</td>
+      <td class="num" style="color:${tipoDe(x)==='ingreso'?'var(--ingreso)':'inherit'}">${tipoDe(x)==='ingreso'?'+':''}${money(x.valor)}</td>
       <td><div class="row-act"><button class="icon-btn" title="Editar" onclick="editar('${x.id}')">✎</button><button class="icon-btn del" title="Eliminar" onclick="borrar('${x.id}')">🗑</button></div></td>
     </tr>`).join('');
-  const subt=rows.reduce((s,x)=>s+x.valor,0);
-  tf.innerHTML=`<tr><td colspan="4">Subtotal (${rows.length} mov. visibles)</td><td class="num">${money(subt)}</td><td></td></tr>`;
+  const sg=rows.filter(x=>tipoDe(x)==='gasto').reduce((s,x)=>s+x.valor,0), si=rows.filter(x=>tipoDe(x)==='ingreso').reduce((s,x)=>s+x.valor,0);
+  tf.innerHTML=`<tr><td colspan="5">Visible (${rows.length} mov.) — Gastos ${money(sg)} · Ingresos ${money(si)}</td><td class="num">Neto ${money(si-sg)}</td><td></td></tr>`;
 }
 
 /* ================= RESUMEN ================= */
@@ -567,19 +599,30 @@ function barra(r,max){const w=v=>Math.max(0,v/max*100);return `<div class="barwr
 function filaVacia(cols){return `<tbody><tr><td colspan="${cols}"><div class="empty"><div class="big">📊</div>Sin datos todavía.</div></td></tr></tbody>`}
 function renderResumen(){
   const sel=document.getElementById('resMes'); if(!sel)return;
-  const base=data.filter(esGasto);
-  const meses=[...new Set(base.map(x=>String(x.fecha).slice(0,7)).filter(s=>/^\d{4}-\d{2}$/.test(s)))].sort();
+  const selP=document.getElementById('resPersona'); if(selP)selP.value=personaSel;
+  const todo=data.filter(x=>esGasto(x)&&(personaSel==='todos'||x.agg===personaSel));
+  const base=todo.filter(x=>tipoDe(x)==='gasto');          // gastos: alimentan las tablas del informe
+  const baseIng=todo.filter(x=>tipoDe(x)==='ingreso');     // ingresos: alimentan el KPI
+  const meses=[...new Set(todo.map(x=>String(x.fecha).slice(0,7)).filter(s=>/^\d{4}-\d{2}$/.test(s)))].sort();
   if(mesSel!=='todos'&&!meses.includes(mesSel))mesSel='todos';
   sel.innerHTML='<option value="todos">Todos los meses</option>'+meses.map(m=>`<option value="${m}">${mesLabel(m)}</option>`).join('');
   sel.value=mesSel;
   const fil=mesSel==='todos'?base:base.filter(x=>String(x.fecha).slice(0,7)===mesSel);
-  const etiqueta=mesSel==='todos'?'':'· '+mesLabel(mesSel);
+  const filIng=mesSel==='todos'?baseIng:baseIng.filter(x=>String(x.fecha).slice(0,7)===mesSel);
+  const etiqueta=(mesSel==='todos'?'':'· '+mesLabel(mesSel))+(personaSel==='todos'?'':' · '+AGG[personaSel]);
   const t={karen:0,andres:0,total:0,n:0}; fil.forEach(x=>{t[x.agg]+=x.valor;t.total+=x.valor;t.n++;});
+  const ing=filIng.reduce((a,x)=>a+x.valor,0);
   const prom=t.n?t.total/t.n:0;
-  document.getElementById('resKpis').innerHTML=`
-    <div class="kpi karen"><div class="lab">Karen</div><div class="val">${money(t.karen)}</div><div class="cnt">${pct(t.karen,t.total)}% del total</div></div>
-    <div class="kpi andres"><div class="lab">Andrés</div><div class="val">${money(t.andres)}</div><div class="cnt">${pct(t.andres,t.total)}% del total</div></div>
-    <div class="kpi total"><div class="lab">Total ${mesSel==='todos'?'general':mesLabel(mesSel)}</div><div class="val">${money(t.total)}</div><div class="cnt">${t.n} mov. · promedio ${money(prom)}</div></div>`;
+  const per=mesSel==='todos'?'':' '+mesLabel(mesSel);
+  let k='';
+  if(personaSel==='todos'){
+    k+=`<div class="kpi karen"><div class="lab">Karen · gastos</div><div class="val">${money(t.karen)}</div><div class="cnt">${pct(t.karen,t.total)}% de los gastos</div></div>
+        <div class="kpi andres"><div class="lab">Andrés · gastos</div><div class="val">${money(t.andres)}</div><div class="cnt">${pct(t.andres,t.total)}% de los gastos</div></div>`;
+  }
+  k+=`<div class="kpi total"><div class="lab">Total gastos${per}</div><div class="val">${money(t.total)}</div><div class="cnt">${t.n} mov. · promedio ${money(prom)}</div></div>
+      <div class="kpi ingreso"><div class="lab">Ingresos${per}</div><div class="val" style="color:var(--ingreso)">${money(ing)}</div><div class="cnt">${filIng.length} mov.</div></div>
+      <div class="kpi gan"><div class="lab">Neto (ingresos − gastos)</div><div class="val ${ing-t.total>=0?'pos':'neg'}">${money(ing-t.total)}</div><div class="cnt">${ing?pct(t.total,ing)+'% de los ingresos gastado':'Sin ingresos registrados'}</div></div>`;
+  document.getElementById('resKpis').innerHTML=k;
 
   const porMes={};
   base.forEach(x=>{const ym=String(x.fecha).slice(0,7);if(!/^\d{4}-\d{2}$/.test(ym))return;(porMes[ym]=porMes[ym]||{karen:0,andres:0,total:0});porMes[ym][x.agg]+=x.valor;porMes[ym].total+=x.valor;});
@@ -740,10 +783,13 @@ function abrirRecibo(){
   const t=totales(); const ahora=new Date();
   const fechaGen=ahora.toLocaleString('es-CO',{dateStyle:'long',timeStyle:'short'});
   const folio='REC-'+ahora.toISOString().slice(0,10).replace(/-/g,'')+'-'+(ahora.getHours()*60+ahora.getMinutes());
+  function tabla(items,titulo,color){if(!items.length)return '';const sub=items.reduce((s,x)=>s+x.valor,0);
+    return `<div style="font-size:.8rem;font-weight:700;color:${color};margin:10px 0 4px">${titulo}</div>
+      <table><thead><tr><th>Fecha</th><th>Categoría</th><th>Observación</th><th style="text-align:right">Valor</th></tr></thead><tbody>${items.map(x=>`<tr><td>${fechaCO(x.fecha)}</td><td>${esc(x.cat)}</td><td>${esc(x.obs)||'—'}</td><td style="text-align:right;font-weight:600">${money(x.valor)}</td></tr>`).join('')}<tr><td colspan="3" style="text-align:right;font-weight:800">Subtotal ${titulo}</td><td style="text-align:right;font-weight:800">${money(sub)}</td></tr></tbody></table>`;}
   function seccion(agg){const items=base.filter(x=>x.agg===agg).sort((a,b)=>a.fecha<b.fecha?-1:1);if(!items.length)return '';
-    const sub=items.reduce((s,x)=>s+x.valor,0);
-    return `<div class="rb-sec">${AGG[agg]} — ${items.length} mov. · ${money(sub)}</div>
-      <table><thead><tr><th>Fecha</th><th>Categoría</th><th>Observación</th><th style="text-align:right">Valor</th></tr></thead><tbody>${items.map(x=>`<tr><td>${fechaCO(x.fecha)}</td><td>${esc(x.cat)}</td><td>${esc(x.obs)||'—'}</td><td style="text-align:right;font-weight:600">${money(x.valor)}</td></tr>`).join('')}<tr><td colspan="3" style="text-align:right;font-weight:800">Subtotal ${AGG[agg]}</td><td style="text-align:right;font-weight:800">${money(sub)}</td></tr></tbody></table>`;}
+    const g=items.filter(x=>tipoDe(x)==='gasto'), i=items.filter(x=>tipoDe(x)==='ingreso');
+    const sg=g.reduce((s,x)=>s+x.valor,0), si=i.reduce((s,x)=>s+x.valor,0);
+    return `<div class="rb-sec">${AGG[agg]} — Gastos ${money(sg)}${si?' · Ingresos '+money(si)+' · Neto '+money(si-sg):''}</div>`+tabla(g,'Gastos','var(--rojo)')+tabla(i,'Ingresos','var(--ingreso)');}
   document.getElementById('recibo').innerHTML=`
     <div class="rb-head">
       <svg width="52" height="52" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2c333a" stroke="#A90F0F" stroke-width="2"/><path d="M30 50c0-9 13-9 20 0s20 9 20 0-13-9-20 0-20 9-20 0z" fill="none" stroke="#A90F0F" stroke-width="8" stroke-linecap="round"/></svg>
@@ -751,10 +797,11 @@ function abrirRecibo(){
       <div class="meta">Folio: <b>${folio}</b><br>Generado: ${fechaGen}<br>Movimientos: ${base.length}</div>
     </div>
     <div class="rb-totals">
-      <div class="rb-tot k"><div class="l">Karen</div><div class="v">${money(t.karen)}</div></div>
-      <div class="rb-tot a"><div class="l">Andrés</div><div class="v">${money(t.andres)}</div></div>
-      <div class="rb-tot t"><div class="l">Total general</div><div class="v">${money(t.total)}</div></div>
+      <div class="rb-tot k"><div class="l">Karen · gastos</div><div class="v">${money(t.karen)}</div></div>
+      <div class="rb-tot a"><div class="l">Andrés · gastos</div><div class="v">${money(t.andres)}</div></div>
+      <div class="rb-tot t"><div class="l">Total gastos</div><div class="v">${money(t.total)}</div></div>
     </div>
+    ${t.ing.total?`<div style="font-size:.82rem;color:var(--muted);margin:-8px 0 10px;text-align:center">Ingresos registrados: <b style="color:var(--ingreso)">${money(t.ing.total)}</b> (Karen ${money(t.ing.karen)} · Andrés ${money(t.ing.andres)}) · Neto general: <b>${money(t.ing.total-t.total)}</b></div>`:''}
     ${seccion('karen')}${seccion('andres')}
     <div class="rb-foot"><div class="rb-sign"><div class="ln">KAREN</div>Firma / Aprobación</div><div class="rb-sign"><div class="ln">ANDRÉS</div>Firma / Aprobación</div></div>
     <div class="rb-note">Documento generado automáticamente · Valores en pesos colombianos (COP) · GROUPCOS</div>`;
@@ -768,15 +815,18 @@ function exportarExcel(){
   if(base.length===0){toast('⚠ No hay movimientos para exportar');return}
   const t=totales(); const wb=XLSX.utils.book_new();
   const resumen=[['RECIBO DE GASTOS COMPARTIDOS — GROUPCOS'],['Generado:',new Date().toLocaleString('es-CO')],[],
-    ['Agregador','# Movimientos','Total (COP)'],['KAREN',t.n.karen,t.karen],['ANDRÉS',t.n.andres,t.andres],['TOTAL GENERAL',t.n.karen+t.n.andres,t.total]];
+    ['GASTOS','# Movimientos','Total (COP)'],['KAREN',t.n.karen,t.karen],['ANDRÉS',t.n.andres,t.andres],['TOTAL GASTOS',t.n.karen+t.n.andres,t.total],[],
+    ['INGRESOS','# Movimientos','Total (COP)'],['KAREN',t.ing.n.karen,t.ing.karen],['ANDRÉS',t.ing.n.andres,t.ing.andres],['TOTAL INGRESOS',t.ing.n.karen+t.ing.n.andres,t.ing.total],[],
+    ['NETO (ingresos − gastos)','',t.ing.total-t.total]];
   const wsR=XLSX.utils.aoa_to_sheet(resumen); wsR['!cols']=[{wch:22},{wch:16},{wch:18}];
   XLSX.utils.book_append_sheet(wb,wsR,'Resumen');
   [['karen','KAREN'],['andres','ANDRES'],[null,'Todos']].forEach(([agg,nombre])=>{
     const items=(agg?base.filter(x=>x.agg===agg):base).slice().sort((a,b)=>a.fecha<b.fecha?-1:1);
-    const aoa=[['Fecha','Agregador','Categoría','Observación','Valor (COP)']];
-    items.forEach(x=>aoa.push([x.fecha,AGG[x.agg],x.cat,x.obs,x.valor]));
-    const sub=items.reduce((s,x)=>s+x.valor,0); aoa.push([]); aoa.push(['','','','SUBTOTAL',sub]);
-    const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:12},{wch:12},{wch:24},{wch:40},{wch:16}];
+    const aoa=[['Fecha','Persona','Tipo','Categoría','Observación','Valor (COP)']];
+    items.forEach(x=>aoa.push([x.fecha,AGG[x.agg],tipoDe(x)==='ingreso'?'INGRESO':'GASTO',x.cat,x.obs,x.valor]));
+    const sg=items.filter(x=>tipoDe(x)==='gasto').reduce((s,x)=>s+x.valor,0), si=items.filter(x=>tipoDe(x)==='ingreso').reduce((s,x)=>s+x.valor,0);
+    aoa.push([]); aoa.push(['','','','','SUBTOTAL GASTOS',sg]); aoa.push(['','','','','SUBTOTAL INGRESOS',si]); aoa.push(['','','','','NETO',si-sg]);
+    const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:12},{wch:12},{wch:10},{wch:24},{wch:40},{wch:16}];
     XLSX.utils.book_append_sheet(wb,ws,nombre);});
   descargarXlsx(wb,'Recibo_Gastos_Compartidos_'+hoy()+'.xlsx'); toast('⬇ Excel generado');
 }
@@ -842,14 +892,12 @@ async function probarConexion(){const url=document.getElementById('cfgUrl').valu
 function syncAhora(){if(!cloudOn()){toast('⚠ Activa la nube primero');return;}OUTBOX.length?flush():pull();toast('🔄 Sincronizando…');}
 function pintarCfgNube(){if(document.getElementById('cfgUrl')){document.getElementById('cfgUrl').value=CLOUD.url||'';document.getElementById('cfgClave').value=CLOUD.clave||'';document.getElementById('cfgOn').checked=!!CLOUD.on;}}
 
-/* ================= PWA: compartir/descargar, instalación, service worker ================= */
+/* ================= PWA ================= */
 async function descargarXlsx(wb,fn){
-  try{
-    if(navigator.share && navigator.canShare){
+  try{ if(navigator.share && navigator.canShare){
       const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});
       const file=new File([out],fn,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-      if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:fn});return;}
-    }
+      if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:fn});return;} }
   }catch(e){ if(e && e.name==='AbortError') return; }
   XLSX.writeFile(wb,fn);
 }
@@ -857,14 +905,13 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('btnInstalar');if(b)b.style.display='inline-flex';});
 window.addEventListener('appinstalled',()=>{deferredPrompt=null;const b=document.getElementById('btnInstalar');if(b)b.style.display='none';toast('✔ App instalada');});
 async function instalarApp(){if(!deferredPrompt){toast('Usa el menú del navegador → "Agregar a pantalla de inicio"');return;}deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;const b=document.getElementById('btnInstalar');if(b)b.style.display='none';}
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-}
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
 
 /* ================= Init ================= */
 load(); negLoad(); loadCfg();
 document.getElementById('fFecha').value=hoy();
 document.getElementById('nFecha').value=hoy();
+pintarCats('gasto',false);
 render(); renderNegocio(); pintarCfgNube();
 setEstado(cloudOn()?'Conectando…':'Desactivado', cloudOn()?'sync':'off');
 if(cloudOn()) conectar();

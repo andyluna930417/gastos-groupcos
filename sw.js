@@ -2,7 +2,7 @@
    - Cachea la app (index, manifest, íconos) para funcionar sin internet.
    - NUNCA intercepta las llamadas a Google (script.google.com): siempre van a la red.
    - index.html: red primero (para recibir actualizaciones), caché si no hay conexión. */
-const CACHE = 'gastos-groupcos-v1';
+const CACHE = 'gastos-groupcos-v2';
 const ASSETS = ['./', './index.html', './manifest.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
