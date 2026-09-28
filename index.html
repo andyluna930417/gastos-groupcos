@@ -398,27 +398,28 @@
           <span>Estado actual:</span> <span id="cloudStatus" class="cloud-pill off">○ Desactivado</span>
           <span style="margin-left:auto;font-size:.8rem">Pendientes por enviar: <b id="pendNum">0</b></span>
         </div>
-        <label style="margin-bottom:8px;display:block">Configuración</label>
+        <div class="info-box"><b>La conexión ya viene configurada.</b> Solo falta la clave: escríbela abajo y guarda, o abre el <b>enlace de configuración</b> que te compartieron (queda conectado automáticamente).</div>
         <div class="form-grid" style="margin-bottom:10px">
-          <div class="field full"><label>URL del Web App (Apps Script)</label><input type="text" id="cfgUrl" placeholder="https://script.google.com/macros/s/AKfy.../exec"></div>
-          <div class="field"><label>Clave compartida</label><input type="text" id="cfgClave" placeholder="La misma clave del script"></div>
+          <div class="field"><label>Clave compartida</label><input type="password" id="cfgClave" placeholder="Escribe la clave" autocomplete="off"></div>
           <div class="field" style="justify-content:flex-end"><label class="switch"><input type="checkbox" id="cfgOn"> Activar sincronización</label></div>
         </div>
         <div class="import-actions">
-          <button class="btn btn-rojo" onclick="guardarCfgNube()">💾 Guardar configuración</button>
+          <button class="btn btn-rojo" onclick="guardarCfgNube()">💾 Guardar y conectar</button>
           <button class="btn btn-gris" onclick="probarConexion()">🔌 Probar conexión</button>
           <button class="btn btn-ghost" style="color:var(--gris);border-color:var(--linea)" onclick="syncAhora()">🔄 Sincronizar ahora</button>
         </div>
-        <div class="danger-box" style="background:#eef4fb;border-color:#2563a8;color:#2c4a66">La nube sincroniza <b>todo</b>: los gastos (Karen/Andrés) y el módulo de Negocio, entre todos los equipos.</div>
-        <label style="margin:22px 0 4px;display:block">Pasos para configurarla (una sola vez)</label>
-        <ol class="pasos">
-          <li>Entra a <code>sheets.google.com</code> y crea una hoja nueva en blanco.</li>
-          <li>Menú <b>Extensiones → Apps Script</b>. Borra el contenido y pega el código del archivo <b>backend</b>.</li>
-          <li>Cambia <code>CLAVE</code> por una contraseña tuya. Esa misma va en “Clave compartida”.</li>
-          <li><b>Implementar → Nueva implementación → Aplicación web</b>. Ejecutar como: <b>Yo</b>. Quién accede: <b>Cualquiera</b>.</li>
-          <li>Copia la <b>URL</b> (termina en <code>/exec</code>), pégala arriba, pon la clave, activa y guarda.</li>
-          <li>Pásale a Andrés el mismo archivo con la misma URL y clave.</li>
-        </ol>
+        <div class="danger-box" style="background:#e9f6ee;border-color:var(--ingreso);color:#1c5e38;margin-top:16px">
+          <b>Para conectar a Karen o Andrés sin que escriban nada:</b> con tu app ya conectada, pulsa el botón y envíales el enlace por WhatsApp. Al abrirlo, su app queda sincronizada. Compártelo solo con ellos.
+          <div style="margin-top:10px"><button class="btn btn-verde btn-sm" onclick="copiarEnlaceConfig()">🔗 Copiar enlace de configuración</button></div>
+        </div>
+        <details style="margin-top:18px">
+          <summary style="cursor:pointer;font-size:.8rem;font-weight:700;color:var(--muted)">Opciones avanzadas (cambiar la URL del Web App)</summary>
+          <div class="form-grid" style="margin-top:10px">
+            <div class="field full"><label>URL del Web App (Apps Script)</label><input type="text" id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
+          </div>
+          <p class="hint" style="margin-top:6px;font-size:.76rem;color:var(--muted)">Solo cámbiala si vuelves a publicar el script con una URL distinta. Déjala vacía para usar la incorporada.</p>
+        </details>
+        <div class="danger-box" style="background:#eef4fb;border-color:#2563a8;color:#2c4a66;margin-top:14px">La nube sincroniza <b>todo</b>: los gastos (Karen/Andrés) y el módulo de Negocio, entre todos los equipos.</div>
       </div>
     </div>
   </section>
@@ -844,8 +845,27 @@ function normFecha(v){
 
 /* ================= NUBE ================= */
 const CFGKEY='gastos_cloud_cfg', OBKEY='gastos_cloud_outbox';
+const CLOUD_DEFAULT_URL='https://script.google.com/macros/s/AKfycbwWDugMIPxK9rWFYOFZHnxmULcPanW8VT-UD2nB4YXisA2PnvLgT2oc9-l7bvi0J4MP/exec'; // Web App publicado (sin clave)
 let CLOUD={on:false,url:'',clave:''}; let OUTBOX=[]; let polling=null; let syncing=false;
-function loadCfg(){try{CLOUD=Object.assign(CLOUD,JSON.parse(localStorage.getItem(CFGKEY))||{})}catch(e){}try{OUTBOX=JSON.parse(localStorage.getItem(OBKEY))||[]}catch(e){OUTBOX=[]}}
+function loadCfg(){try{CLOUD=Object.assign(CLOUD,JSON.parse(localStorage.getItem(CFGKEY))||{})}catch(e){}try{OUTBOX=JSON.parse(localStorage.getItem(OBKEY))||[]}catch(e){OUTBOX=[]}
+  if(!CLOUD.url)CLOUD.url=CLOUD_DEFAULT_URL;}
+/* Enlace de configuración: ?clave=...  (opcional &url=...) → se guarda en el equipo y se limpia de la barra */
+function leerEnlaceConfig(){
+  try{
+    const q=new URLSearchParams(location.search); const c=q.get('clave'), u=q.get('url');
+    if(!c&&!u)return;
+    if(u)CLOUD.url=u.trim(); if(c){CLOUD.clave=c.trim();CLOUD.on=true;}
+    saveCfg(); try{history.replaceState({},'',location.pathname);}catch(e){}
+    setTimeout(()=>toast('✔ Conexión configurada desde el enlace'),300);
+  }catch(e){}
+}
+async function copiarEnlaceConfig(){
+  if(!CLOUD.clave){toast('⚠ Primero guarda la clave y conecta');return;}
+  const base=location.href.split('?')[0].split('#')[0];
+  const link=base+'?clave='+encodeURIComponent(CLOUD.clave)+(CLOUD.url&&CLOUD.url!==CLOUD_DEFAULT_URL?'&url='+encodeURIComponent(CLOUD.url):'');
+  try{await navigator.clipboard.writeText(link);toast('🔗 Enlace copiado · compártelo solo con Karen y Andrés');}
+  catch(e){prompt('Copia este enlace y compártelo solo con Karen y Andrés:',link);}
+}
 function saveCfg(){localStorage.setItem(CFGKEY,JSON.stringify(CLOUD))}
 function saveOutbox(){localStorage.setItem(OBKEY,JSON.stringify(OUTBOX))}
 function cloudOn(){return !!(CLOUD.on&&CLOUD.url)}
@@ -883,14 +903,14 @@ async function sincEntidad(ent,nombre){
 async function conectar(){if(!cloudOn()){setEstado('Desactivado','off');return;}setEstado('Conectando…','sync');
   try{await sincEntidad('gastos','gastos');await sincEntidad('negocio','negocio');setEstado('Conectado','ok');startPoll();}
   catch(e){setEstado('Sin conexión','off');}}
-function guardarCfgNube(){CLOUD.url=document.getElementById('cfgUrl').value.trim();CLOUD.clave=document.getElementById('cfgClave').value.trim();CLOUD.on=document.getElementById('cfgOn').checked;saveCfg();
-  if(CLOUD.on){if(!CLOUD.url){toast('⚠ Falta la URL del Web App');return;}toast('✔ Configuración guardada');conectar();}else{clearInterval(polling);setEstado('Desactivado','off');toast('Sincronización desactivada');}}
-async function probarConexion(){const url=document.getElementById('cfgUrl').value.trim();const clave=document.getElementById('cfgClave').value.trim();if(!url){toast('⚠ Ingresa la URL');return;}setEstado('Probando…','sync');
+function guardarCfgNube(){CLOUD.url=(document.getElementById('cfgUrl').value.trim())||CLOUD_DEFAULT_URL;CLOUD.clave=document.getElementById('cfgClave').value.trim();CLOUD.on=document.getElementById('cfgOn').checked||!!CLOUD.clave;document.getElementById('cfgOn').checked=CLOUD.on;saveCfg();
+  if(CLOUD.on){if(!CLOUD.clave){toast('⚠ Escribe la clave');return;}toast('✔ Configuración guardada');conectar();}else{clearInterval(polling);setEstado('Desactivado','off');toast('Sincronización desactivada');}}
+async function probarConexion(){const url=document.getElementById('cfgUrl').value.trim()||CLOUD_DEFAULT_URL;const clave=document.getElementById('cfgClave').value.trim();if(!clave){toast('⚠ Escribe la clave');return;}setEstado('Probando…','sync');
   try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'cargar',clave}),redirect:'follow'});const j=await r.json();
     if(j.ok){toast('✔ Conexión exitosa · '+(j.datos?j.datos.length:0)+' registro(s)');setEstado('Conectado','ok');}else if(j.error==='clave_invalida'){toast('⚠ Clave incorrecta');setEstado('Clave incorrecta','off');}else{toast('⚠ '+j.error);setEstado('Error','off');}}
   catch(e){toast('⚠ No se pudo conectar (revisa URL y despliegue)');setEstado('Sin conexión','off');}}
 function syncAhora(){if(!cloudOn()){toast('⚠ Activa la nube primero');return;}OUTBOX.length?flush():pull();toast('🔄 Sincronizando…');}
-function pintarCfgNube(){if(document.getElementById('cfgUrl')){document.getElementById('cfgUrl').value=CLOUD.url||'';document.getElementById('cfgClave').value=CLOUD.clave||'';document.getElementById('cfgOn').checked=!!CLOUD.on;}}
+function pintarCfgNube(){if(document.getElementById('cfgUrl')){document.getElementById('cfgUrl').value=(CLOUD.url&&CLOUD.url!==CLOUD_DEFAULT_URL)?CLOUD.url:'';document.getElementById('cfgClave').value=CLOUD.clave||'';document.getElementById('cfgOn').checked=!!CLOUD.on;}}
 
 /* ================= PWA ================= */
 async function descargarXlsx(wb,fn){
@@ -908,7 +928,7 @@ async function instalarApp(){if(!deferredPrompt){toast('Usa el menú del navegad
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
 
 /* ================= Init ================= */
-load(); negLoad(); loadCfg();
+load(); negLoad(); loadCfg(); leerEnlaceConfig();
 document.getElementById('fFecha').value=hoy();
 document.getElementById('nFecha').value=hoy();
 pintarCats('gasto',false);
