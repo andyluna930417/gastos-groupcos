@@ -398,6 +398,12 @@
           <span>Estado actual:</span> <span id="cloudStatus" class="cloud-pill off">○ Desactivado</span>
           <span style="margin-left:auto;font-size:.8rem">Pendientes por enviar: <b id="pendNum">0</b></span>
         </div>
+        <div id="verAviso" class="danger-box" style="display:none;margin:0 0 16px">
+          <b>⚠ El script de la nube está desactualizado.</b> Por eso los ingresos pueden verse como gastos en otros equipos.
+          En Apps Script pega el <b>Backend</b> más reciente y publica una <b>versión nueva</b> de la implementación existente
+          (Implementar → <i>Administrar implementaciones</i> → ✎ → Versión: <i>Nueva versión</i> → Implementar). <b>No uses “Nueva implementación”</b>: eso cambia la URL.
+          Mientras tanto, la app conserva tus ingresos y los reenviará sola cuando el script esté al día.
+        </div>
         <div class="info-box"><b>La conexión ya viene configurada.</b> Solo falta la clave: escríbela abajo y guarda, o abre el <b>enlace de configuración</b> que te compartieron (queda conectado automáticamente).</div>
         <div class="form-grid" style="margin-bottom:10px">
           <div class="field"><label>Clave compartida</label><input type="password" id="cfgClave" placeholder="Escribe la clave" autocomplete="off"></div>
@@ -847,6 +853,7 @@ function normFecha(v){
 const CFGKEY='gastos_cloud_cfg', OBKEY='gastos_cloud_outbox';
 const CLOUD_DEFAULT_URL='https://script.google.com/macros/s/AKfycbwWDugMIPxK9rWFYOFZHnxmULcPanW8VT-UD2nB4YXisA2PnvLgT2oc9-l7bvi0J4MP/exec'; // Web App publicado (sin clave)
 let CLOUD={on:false,url:'',clave:''}; let OUTBOX=[]; let polling=null; let syncing=false;
+const CLOUD_MIN_VER=3; let cloudVer=0, avisoVerMostrado=false;
 function loadCfg(){try{CLOUD=Object.assign(CLOUD,JSON.parse(localStorage.getItem(CFGKEY))||{})}catch(e){}try{OUTBOX=JSON.parse(localStorage.getItem(OBKEY))||[]}catch(e){OUTBOX=[]}
   if(!CLOUD.url)CLOUD.url=CLOUD_DEFAULT_URL;}
 /* Enlace de configuración: ?clave=...  (opcional &url=...) → se guarda en el equipo y se limpia de la barra */
@@ -872,7 +879,21 @@ function cloudOn(){return !!(CLOUD.on&&CLOUD.url)}
 async function api(accion,extra,entidad){
   const body=Object.assign({accion,clave:CLOUD.clave,entidad:entidad||'gastos'},extra||{});
   const r=await fetch(CLOUD.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),redirect:'follow'});
-  const j=await r.json(); if(!j.ok)throw new Error(j.error||'error'); return j;
+  const j=await r.json(); if(!j.ok)throw new Error(j.error||'error');
+  cloudVer=Number(j.v)||0; checkVersionNube(); return j;
+}
+function checkVersionNube(){
+  const viejo=cloudOn()&&cloudVer<CLOUD_MIN_VER;
+  const a=document.getElementById('verAviso'); if(a)a.style.display=viejo?'block':'none';
+  if(viejo&&!avisoVerMostrado){avisoVerMostrado=true;setTimeout(()=>toast('⚠ Script de la nube desactualizado: publica una versión nueva (ver pestaña Nube)'),400);}
+}
+/* Si la nube no trae "tipo" (script viejo), conserva el tipo local; cuando el script ya es nuevo, reenvía esos registros */
+function mezclarGastos(remoto){
+  const localById=new Map(data.map(x=>[x.id,x])); const reenviar=[];
+  const out=remoto.map(r=>{const l=localById.get(r.id);
+    if(l&&l.tipo==='ingreso'&&r.tipo!=='ingreso'){const m={...r,tipo:'ingreso'};if(cloudVer>=CLOUD_MIN_VER)reenviar.push(m);return m;}
+    return r;});
+  return {out,reenviar};
 }
 function setEstado(txt,cls){['cloudStatus','headCloud'].forEach(id=>{const el=document.getElementById(id);if(!el)return;
   el.textContent=(cls==='ok'?'● ':cls==='off'?'● ':cls==='sync'?'⟳ ':'○ ')+txt;el.className=(id==='headCloud'?'cloud-pill head ':'cloud-pill ')+cls;
@@ -885,29 +906,32 @@ async function flush(){if(!cloudOn()||syncing||!OUTBOX.length)return;syncing=tru
     OUTBOX.shift();saveOutbox();}setEstado('Conectado','ok');}catch(e){setEstado('Sin conexión — reintentará','off');}finally{syncing=false;}}
 async function pull(){if(!cloudOn()||syncing)return;if(OUTBOX.length){return flush();}
   try{
-    const jg=await api('cargar',null,'gastos');data=(jg.datos||[]).map(r=>({...r,fecha:normFecha(r.fecha)}));save();
+    const jg=await api('cargar',null,'gastos');const mg=mezclarGastos((jg.datos||[]).map(r=>({...r,fecha:normFecha(r.fecha)})));data=mg.out;save();
     const jn=await api('cargar',null,'negocio');negocio=(jn.datos||[]).map(r=>({...r,fecha:normFecha(r.fecha)}));negSave();
     render();renderNegocio();setEstado('Conectado','ok');
+    if(mg.reenviar.length){mg.reenviar.forEach(r=>OUTBOX.push({t:'upsert',r,e:'gastos'}));saveOutbox();flush();}
   }catch(e){setEstado('Sin conexión','off');}}
 function startPoll(){clearInterval(polling);if(cloudOn())polling=setInterval(pull,20000);}
 function setArr(ent,arr){if(ent==='gastos'){data=arr;save();render();}else{negocio=arr;negSave();renderNegocio();}}
 async function sincEntidad(ent,nombre){
   const j=await api('cargar',null,ent);
-  const remoto=(j.datos||[]).map(r=>({...r,fecha:normFecha(r.fecha)}));
+  let remoto=(j.datos||[]).map(r=>({...r,fecha:normFecha(r.fecha)}));
+  let reenviar=[]; if(ent==='gastos'){const mg=mezclarGastos(remoto);remoto=mg.out;reenviar=mg.reenviar;}
   const local=ent==='gastos'?data:negocio;
   if(remoto.length===0&&local.length>0){
     if(confirm('La nube de '+nombre+' está vacía y tienes '+local.length+' registro(s) locales.\n\nAceptar = subirlos a la nube.\nCancelar = traer la nube (vacía).')){await api('reemplazar',{datos:local},ent);}
     else{setArr(ent,[]);}
   }else{setArr(ent,remoto);}
+  if(reenviar.length){reenviar.forEach(r=>OUTBOX.push({t:'upsert',r,e:'gastos'}));saveOutbox();}
 }
 async function conectar(){if(!cloudOn()){setEstado('Desactivado','off');return;}setEstado('Conectando…','sync');
-  try{await sincEntidad('gastos','gastos');await sincEntidad('negocio','negocio');setEstado('Conectado','ok');startPoll();}
+  try{await sincEntidad('gastos','gastos');await sincEntidad('negocio','negocio');setEstado('Conectado','ok');startPoll();if(OUTBOX.length)flush();}
   catch(e){setEstado('Sin conexión','off');}}
 function guardarCfgNube(){CLOUD.url=(document.getElementById('cfgUrl').value.trim())||CLOUD_DEFAULT_URL;CLOUD.clave=document.getElementById('cfgClave').value.trim();CLOUD.on=document.getElementById('cfgOn').checked||!!CLOUD.clave;document.getElementById('cfgOn').checked=CLOUD.on;saveCfg();
   if(CLOUD.on){if(!CLOUD.clave){toast('⚠ Escribe la clave');return;}toast('✔ Configuración guardada');conectar();}else{clearInterval(polling);setEstado('Desactivado','off');toast('Sincronización desactivada');}}
 async function probarConexion(){const url=document.getElementById('cfgUrl').value.trim()||CLOUD_DEFAULT_URL;const clave=document.getElementById('cfgClave').value.trim();if(!clave){toast('⚠ Escribe la clave');return;}setEstado('Probando…','sync');
   try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:'cargar',clave}),redirect:'follow'});const j=await r.json();
-    if(j.ok){toast('✔ Conexión exitosa · '+(j.datos?j.datos.length:0)+' registro(s)');setEstado('Conectado','ok');}else if(j.error==='clave_invalida'){toast('⚠ Clave incorrecta');setEstado('Clave incorrecta','off');}else{toast('⚠ '+j.error);setEstado('Error','off');}}
+    if(j.ok){cloudVer=Number(j.v)||0;const viejo=cloudVer<CLOUD_MIN_VER;toast((viejo?'⚠ Conecta, pero el script está DESACTUALIZADO · ':'✔ Conexión exitosa · script al día · ')+(j.datos?j.datos.length:0)+' registro(s)');setEstado(viejo?'Script desactualizado':'Conectado',viejo?'sync':'ok');const a=document.getElementById('verAviso');if(a)a.style.display=viejo?'block':'none';}else if(j.error==='clave_invalida'){toast('⚠ Clave incorrecta');setEstado('Clave incorrecta','off');}else{toast('⚠ '+j.error);setEstado('Error','off');}}
   catch(e){toast('⚠ No se pudo conectar (revisa URL y despliegue)');setEstado('Sin conexión','off');}}
 function syncAhora(){if(!cloudOn()){toast('⚠ Activa la nube primero');return;}OUTBOX.length?flush():pull();toast('🔄 Sincronizando…');}
 function pintarCfgNube(){if(document.getElementById('cfgUrl')){document.getElementById('cfgUrl').value=(CLOUD.url&&CLOUD.url!==CLOUD_DEFAULT_URL)?CLOUD.url:'';document.getElementById('cfgClave').value=CLOUD.clave||'';document.getElementById('cfgOn').checked=!!CLOUD.on;}}
