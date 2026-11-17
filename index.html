@@ -183,7 +183,31 @@
   .medio-card .rowm .lb{color:var(--muted)}
   .medio-card .neto{border-top:1px dashed var(--linea);margin-top:8px;padding-top:7px;font-weight:800}
 
+  /* Recurrentes */
+  .rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .rec-item{border:1px solid var(--linea);border-radius:10px;padding:12px 14px;border-left:4px solid var(--rojo);display:flex;flex-direction:column;gap:6px;background:#fff}
+  .rec-item.ingreso{border-left-color:var(--ingreso)}
+  .rec-item .rt{font-weight:800;color:var(--gris);font-size:.92rem}
+  .rec-item .rm{font-size:.76rem;color:var(--muted)}
+  .rec-item .rv{font-size:1.05rem;font-weight:800}
+  .rec-item .ra{display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap}
+  .rec-item.done{opacity:.8;background:#f7f8fa}
+  .rec-done{font-size:.74rem;font-weight:700;color:var(--ingreso)}
+  /* Presupuesto */
+  .pre-bar{background:#eef0f2;border-radius:4px;height:12px;overflow:hidden;display:inline-block;width:calc(100% - 46px);vertical-align:middle;margin-right:6px}
+  .pre-bar div{height:100%}
+  .pre-ok{background:var(--ingreso)}.pre-warn{background:var(--warn)}.pre-over{background:var(--rojo)}
+  .pre-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+  .pre-row{display:flex;justify-content:space-between;align-items:center;font-size:.84rem;border:1px solid var(--linea);border-radius:8px;padding:6px 10px;background:#fff}
+  /* Cierre */
+  #cierre{padding:34px 40px}
+  #cierre table{font-size:.8rem;margin-bottom:6px}#cierre thead th{background:var(--gris);font-size:.7rem}
+  .cz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
+
   @media print{
+    body.print-cierre *{visibility:hidden}
+    body.print-cierre #cierre,body.print-cierre #cierre *{visibility:visible}
+    body.print-cierre #cierre{position:absolute;left:0;top:0;width:100%;padding:0}
     body.print-resumen *{visibility:hidden}
     body.print-resumen #v-resumen,body.print-resumen #v-resumen *{visibility:visible}
     body.print-resumen #v-resumen{position:absolute;left:0;top:0;width:100%}
@@ -194,9 +218,9 @@
     body.print-negocio #v-negocio .card:first-child .card-b > .btn,body.print-negocio .neg-form{display:none}
   }
   @media print{
-    body:not(.print-resumen):not(.print-negocio) *{visibility:hidden}
-    body:not(.print-resumen):not(.print-negocio) #recibo,body:not(.print-resumen):not(.print-negocio) #recibo *{visibility:visible}
-    body:not(.print-resumen):not(.print-negocio) #recibo{position:absolute;left:0;top:0;width:100%;padding:0}
+    body:not(.print-resumen):not(.print-negocio):not(.print-cierre) *{visibility:hidden}
+    body:not(.print-resumen):not(.print-negocio):not(.print-cierre) #recibo,body:not(.print-resumen):not(.print-negocio):not(.print-cierre) #recibo *{visibility:visible}
+    body:not(.print-resumen):not(.print-negocio):not(.print-cierre) #recibo{position:absolute;left:0;top:0;width:100%;padding:0}
     .modal-top{display:none}
   }
   @media(max-width:640px){.rb-totals{grid-template-columns:repeat(1,1fr)}#recibo{padding:20px}header{flex-wrap:wrap}}
@@ -236,6 +260,28 @@
   <!-- ===== REGISTRO ===== -->
   <section id="v-registro" class="view active">
     <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <div class="card-h"><span class="ic">⟳</span> Recurrentes del mes
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="toggleRecForm()">＋ Nuevo</button>
+        <button class="btn btn-verde btn-sm" onclick="registrarPendientes()">✔ Registrar pendientes</button>
+      </div>
+      <div class="card-b">
+        <div id="recForm" style="display:none;border:1px solid var(--linea);border-radius:10px;padding:14px;margin-bottom:14px;background:#fafbfc">
+          <div class="form-grid">
+            <div class="field"><label>Persona</label><select id="rAgg"><option value="karen">Karen</option><option value="andres">Andrés</option></select></div>
+            <div class="field"><label>Tipo</label><select id="rTipo" onchange="pintarRecCats(false)"><option value="gasto">Gasto</option><option value="ingreso">Ingreso</option></select></div>
+            <div class="field"><label>Categoría</label><select id="rCat" onchange="document.getElementById('rCatOtraW').style.display=this.value==='__otra'?'flex':'none'"></select></div>
+            <div class="field" id="rCatOtraW" style="display:none"><label>Categoría personalizada</label><input type="text" id="rCatOtra" placeholder="Escribir categoría"></div>
+            <div class="field"><label>Valor (COP)</label><input type="text" id="rValor" inputmode="numeric" placeholder="$ 0" oninput="fmtValor(this)"></div>
+            <div class="field"><label>Día del mes (opcional)</label><input type="number" id="rDia" min="1" max="31" placeholder="Ej. 5"></div>
+            <div class="field full"><label>Observación</label><input type="text" id="rObs" placeholder="Ej. Arriendo apartamento"></div>
+            <div class="field"><button class="btn btn-rojo" id="btnRecGuardar" onclick="recGuardar()" style="width:100%;justify-content:center">Guardar recurrente</button></div>
+            <div class="field"><button class="btn btn-gris" onclick="toggleRecForm(false)" style="width:100%;justify-content:center">Cancelar</button></div>
+          </div>
+        </div>
+        <div class="rec-grid" id="recList"></div>
+      </div>
+    </div>
     <div class="card">
       <div class="card-h"><span class="ic">＋</span> Registrar movimiento personal</div>
       <div class="card-b">
@@ -279,6 +325,9 @@
         <span class="chip active" data-t="todos" onclick="setFiltroTipo('todos',this)">Gastos + Ingresos</span>
         <span class="chip" data-t="gasto" onclick="setFiltroTipo('gasto',this)">Solo gastos</span>
         <span class="chip" data-t="ingreso" onclick="setFiltroTipo('ingreso',this)">Solo ingresos</span>
+        <span style="width:1px;height:20px;background:var(--linea);margin:0 4px"></span>
+        <span style="font-size:.76rem;font-weight:700;color:var(--gris)">Mes:</span>
+        <select id="regMes" onchange="regMesSel=this.value;render()" style="width:auto;padding:5px 9px;font-size:.82rem"></select>
         <input type="text" id="buscar" placeholder="Buscar categoría u observación…" oninput="render()" style="max-width:260px;margin-left:auto">
       </div>
       <div class="tbl-wrap"><table id="tabla">
@@ -304,9 +353,27 @@
             <option value="todos">Karen y Andrés</option><option value="karen">Solo Karen</option><option value="andres">Solo Andrés</option>
           </select>
         </div>
-        <button class="btn btn-gris btn-sm" onclick="imprimirResumen()">🖨 Imprimir informe</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-rojo btn-sm" onclick="abrirCierre()">📄 Cierre de mes</button>
+          <button class="btn btn-gris btn-sm" onclick="imprimirResumen()">🖨 Imprimir informe</button>
+        </div>
       </div>
       <div class="card-b"><div class="kpis" id="resKpis" style="margin:0 0 4px"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><span class="ic">🎯</span> Presupuesto del mes <span id="preMesLbl" style="font-weight:400;font-size:.8rem;color:#c8ced4;margin-left:6px"></span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="togglePreCfg()">⚙ Configurar topes</button>
+      </div>
+      <div id="preCfg" style="display:none;padding:16px 20px;background:#fafbfc;border-bottom:1px solid var(--linea)">
+        <div class="form-grid">
+          <div class="field"><label>Categoría</label><select id="pCat"></select></div>
+          <div class="field"><label>Aplica a</label><select id="pPersona"><option value="todos">Karen y Andrés (suma)</option><option value="karen">Solo Karen</option><option value="andres">Solo Andrés</option></select></div>
+          <div class="field"><label>Tope mensual (COP)</label><input type="text" id="pMonto" inputmode="numeric" placeholder="$ 0" oninput="fmtValor(this)"></div>
+          <div class="field"><button class="btn btn-rojo" onclick="preGuardar()" style="width:100%;justify-content:center">Guardar tope</button></div>
+        </div>
+        <div class="pre-list" id="preList"></div>
+      </div>
+      <div class="tbl-wrap"><table class="rtable" id="tblPre"></table></div>
     </div>
     <div class="card">
       <div class="card-h"><span class="ic">📅</span> Gasto por mes <span style="font-weight:400;font-size:.8rem;color:#c8ced4;margin-left:6px">(evolución completa)</span></div>
@@ -432,6 +499,15 @@
 
 </div>
 
+<div class="modal-bg" id="modalCierre">
+  <div class="modal" style="max-width:840px">
+    <div class="modal-top">
+      <button class="btn btn-gris btn-sm" onclick="imprimirCierre()">🖨 Imprimir / PDF</button>
+      <button class="btn btn-rojo btn-sm" onclick="document.getElementById('modalCierre').classList.remove('show')">Cerrar</button>
+    </div>
+    <div id="cierre"></div>
+  </div>
+</div>
 <div class="modal-bg" id="modalRecibo">
   <div class="modal">
     <div class="modal-top">
@@ -448,9 +524,11 @@
 /* ================= Estado ================= */
 const KEY='gastos_compartidos_groupcos_v1';
 const NKEY='negocio_groupcos_v1';
+const RKEY='recurrentes_groupcos_v1', PKEY='presupuestos_groupcos_v1';
+let recurrentes=[], presupuestos=[], recEditId=null;
 const AGG={karen:'KAREN',andres:'ANDRÉS',conjunto:'CONJUNTO'};
 let data=[], negocio=[];
-let aggSel='', tipoSel='gasto', filtro='todos', filtroTipo='todos', mesSel='todos', personaSel='todos', editId=null;
+let aggSel='', tipoSel='gasto', filtro='todos', filtroTipo='todos', mesSel='todos', personaSel='todos', regMesSel='todos', editId=null;
 let sortKey='fecha', sortDir=-1;
 let negTipo='', negMedio='', negEditId=null, negFiltro='todos', negMesSel='todos';
 
@@ -458,6 +536,10 @@ let negTipo='', negMedio='', negEditId=null, negFiltro='todos', negMesSel='todos
 function load(){try{data=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){data=[]}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){toast('⚠ No se pudo guardar')}}
 function negLoad(){try{negocio=JSON.parse(localStorage.getItem(NKEY))||[]}catch(e){negocio=[]}}
+function recLoad(){try{recurrentes=JSON.parse(localStorage.getItem(RKEY))||[]}catch(e){recurrentes=[]}}
+function recSave(){try{localStorage.setItem(RKEY,JSON.stringify(recurrentes))}catch(e){}}
+function preLoad(){try{presupuestos=JSON.parse(localStorage.getItem(PKEY))||[]}catch(e){presupuestos=[]}}
+function preSave(){try{localStorage.setItem(PKEY,JSON.stringify(presupuestos))}catch(e){}}
 function negSave(){try{localStorage.setItem(NKEY,JSON.stringify(negocio))}catch(e){toast('⚠ No se pudo guardar')}}
 
 /* ================= Utilidades ================= */
@@ -522,7 +604,7 @@ function guardar(){
   if(editId){rec=data.find(x=>x.id===editId);Object.assign(rec,{agg:aggSel,tipo:tipoSel,fecha,cat,valor,obs,ts:Date.now()});toast('✔ Movimiento actualizado');editId=null;
     document.getElementById('btnGuardar').textContent='Agregar movimiento';document.getElementById('btnCancelar').style.display='none';}
   else{rec={id:uid(),agg:aggSel,tipo:tipoSel,fecha,cat,valor,obs,ts:Date.now()};data.push(rec);toast(tipoSel==='ingreso'?'✔ Ingreso registrado':'✔ Gasto registrado');}
-  save(); limpiar(); render();
+  save(); limpiar(); render(); alertaPresupuesto(rec);
   if(cloudOn()) enqueue({t:'upsert',r:rec});
 }
 function limpiar(){
@@ -563,6 +645,7 @@ function esIngreso(x){return esGasto(x)&&tipoDe(x)==='ingreso'}
 function visibles(){
   const q=document.getElementById('buscar').value.toLowerCase().trim();
   let r=data.filter(x=>filtro==='todos'?esGasto(x):x.agg===filtro);
+  if(regMesSel!=='todos')r=r.filter(x=>String(x.fecha).slice(0,7)===regMesSel);
   if(filtroTipo!=='todos')r=r.filter(x=>tipoDe(x)===filtroTipo);
   if(q)r=r.filter(x=>(x.cat+' '+x.obs).toLowerCase().includes(q));
   r.sort((a,b)=>{let va=a[sortKey],vb=b[sortKey];
@@ -570,21 +653,27 @@ function visibles(){
     if(va<vb)return -1*sortDir;if(va>vb)return 1*sortDir;return 0;});
   return r;
 }
-function totales(){
+function totales(ym){
   const t={karen:0,andres:0,total:0,n:{karen:0,andres:0},ing:{karen:0,andres:0,total:0,n:{karen:0,andres:0}}};
-  data.forEach(x=>{if(!esGasto(x))return;
+  data.forEach(x=>{if(!esGasto(x))return;if(ym&&ym!=='todos'&&String(x.fecha).slice(0,7)!==ym)return;
     if(tipoDe(x)==='ingreso'){t.ing[x.agg]+=x.valor;t.ing.total+=x.valor;t.ing.n[x.agg]++;}
     else{t[x.agg]+=x.valor;t.total+=x.valor;t.n[x.agg]++;}});
   return t;
 }
 function render(){
   if(typeof renderResumen==='function')renderResumen();
-  const t=totales();
+  if(typeof renderRecurrentes==='function')renderRecurrentes();
+  const selM=document.getElementById('regMes');
+  if(selM){const meses=[...new Set(data.filter(esGasto).map(x=>String(x.fecha).slice(0,7)).filter(v=>/^\d{4}-\d{2}$/.test(v)))].sort().reverse();
+    if(regMesSel!=='todos'&&!meses.includes(regMesSel))regMesSel='todos';
+    selM.innerHTML='<option value="todos">Todos los meses</option>'+meses.map(m=>`<option value="${m}">${mesLabel(m)}</option>`).join('');selM.value=regMesSel;}
+  const t=totales(regMesSel);
+  const sufijo=regMesSel==='todos'?'':' · '+mesLabel(regMesSel);
   const neto=(g,i)=>`Ingresos <b style="color:var(--ingreso)">${money(i)}</b> · Neto <b>${money(i-g)}</b>`;
   document.getElementById('kpis').innerHTML=`
-    <div class="kpi karen"><div class="lab">Karen · gastos</div><div class="val">${money(t.karen)}</div><div class="cnt">${neto(t.karen,t.ing.karen)}</div></div>
-    <div class="kpi andres"><div class="lab">Andrés · gastos</div><div class="val">${money(t.andres)}</div><div class="cnt">${neto(t.andres,t.ing.andres)}</div></div>
-    <div class="kpi total"><div class="lab">Total gastos</div><div class="val">${money(t.total)}</div><div class="cnt">Ingresos ${money(t.ing.total)} · Neto ${money(t.ing.total-t.total)}</div></div>`;
+    <div class="kpi karen"><div class="lab">Karen · gastos${sufijo}</div><div class="val">${money(t.karen)}</div><div class="cnt">${neto(t.karen,t.ing.karen)}</div></div>
+    <div class="kpi andres"><div class="lab">Andrés · gastos${sufijo}</div><div class="val">${money(t.andres)}</div><div class="cnt">${neto(t.andres,t.ing.andres)}</div></div>
+    <div class="kpi total"><div class="lab">${regMesSel==='todos'?'Total gastos':'Gastos '+mesLabel(regMesSel)}</div><div class="val">${money(t.total)}</div><div class="cnt">Ingresos ${money(t.ing.total)} · Neto ${money(t.ing.total-t.total)}</div></div>`;
   const rows=visibles(), tb=document.getElementById('tbody'), tf=document.getElementById('tfoot');
   if(rows.length===0){tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="big">🧾</div>Sin movimientos para mostrar.<br>Registra el primer movimiento en el formulario.</div></td></tr>`;tf.innerHTML='';return;}
   tb.innerHTML=rows.map(x=>`<tr>
@@ -661,6 +750,7 @@ function renderResumen(){
         <div class="paga-item karen"><div class="who">Karen</div><div class="amt">${money(t.karen)}</div><div class="sh">${pct(t.karen,t.total)}% · ${cnt(fil,'karen')} mov.</div></div>
         <div class="paga-item andres"><div class="who">Andrés</div><div class="amt">${money(t.andres)}</div><div class="sh">${pct(t.andres,t.total)}% · ${cnt(fil,'andres')} mov.</div></div>
       </div>`;}
+  if(typeof renderPresupuesto==='function')renderPresupuesto();
 }
 function imprimirResumen(){if(data.filter(esGasto).length===0){toast('⚠ No hay datos para el informe');return}document.body.classList.add('print-resumen');window.print();setTimeout(()=>document.body.classList.remove('print-resumen'),600);}
 
@@ -783,6 +873,125 @@ function exportarNegocioExcel(){
   descargarXlsx(wb,'Negocio_'+hoy()+'.xlsx'); toast('⬇ Excel de negocio generado');
 }
 
+/* ================= RECURRENTES ================= */
+function mesActual(){return hoy().slice(0,7)}
+function ymDe(x){return String(x.fecha).slice(0,7)}
+function catsDe(tipo){return tipo==='ingreso'?CAT_INGRESO:CAT_GASTO}
+function toggleRecForm(show){const f=document.getElementById('recForm');const s=show===undefined?f.style.display==='none':show;f.style.display=s?'block':'none';if(s&&!recEditId)recLimpiar();if(!s)recEditId=null;}
+function pintarRecCats(keep){const tipo=document.getElementById('rTipo').value;const sel=document.getElementById('rCat');const prev=keep?sel.value:'';
+  sel.innerHTML='<option value="">Seleccionar…</option>'+catsDe(tipo).map(c=>`<option>${c}</option>`).join('')+'<option value="__otra">Otra (especificar)…</option>';
+  if(prev&&[...sel.options].some(o=>o.value===prev))sel.value=prev;document.getElementById('rCatOtraW').style.display=sel.value==='__otra'?'flex':'none';}
+function recLimpiar(){recEditId=null;document.getElementById('rAgg').value='karen';document.getElementById('rTipo').value='gasto';pintarRecCats(false);
+  ['rCatOtra','rValor','rDia','rObs'].forEach(id=>document.getElementById(id).value='');document.getElementById('btnRecGuardar').textContent='Guardar recurrente';}
+function recGuardar(){
+  const agg=document.getElementById('rAgg').value,tipo=document.getElementById('rTipo').value,catSel=document.getElementById('rCat').value;
+  const cat=catSel==='__otra'?document.getElementById('rCatOtra').value.trim():catSel;
+  const valor=parseNum(document.getElementById('rValor').value),dia=Number(document.getElementById('rDia').value)||0,obs=document.getElementById('rObs').value.trim();
+  if(!cat){toast('⚠ Indica la categoría');return}if(!valor){toast('⚠ Ingresa un valor');return}if(dia&&(dia<1||dia>31)){toast('⚠ Día entre 1 y 31');return}
+  let rec;if(recEditId){rec=recurrentes.find(x=>x.id===recEditId);Object.assign(rec,{agg,tipo,cat,obs,valor,dia,ts:Date.now()});}
+  else{rec={id:uid(),agg,tipo,cat,obs,valor,dia,ts:Date.now()};recurrentes.push(rec);}
+  recSave();toggleRecForm(false);recLimpiar();renderRecurrentes();toast('✔ Recurrente guardado');
+  if(cloudOn()&&cloudVer>=CLOUD_MIN_VER)enqueue({t:'upsert',r:rec,e:'recurrentes'});
+}
+function recEditar(id){const r=recurrentes.find(x=>x.id===id);if(!r)return;toggleRecForm(true);recEditId=id;
+  document.getElementById('rAgg').value=r.agg;document.getElementById('rTipo').value=r.tipo;pintarRecCats(false);
+  const sel=document.getElementById('rCat');if([...sel.options].some(o=>o.value===r.cat))sel.value=r.cat;else{sel.value='__otra';document.getElementById('rCatOtra').value=r.cat;document.getElementById('rCatOtraW').style.display='flex';}
+  document.getElementById('rValor').value='$ '+r.valor.toLocaleString('es-CO');document.getElementById('rDia').value=r.dia||'';document.getElementById('rObs').value=r.obs||'';
+  document.getElementById('btnRecGuardar').textContent='Guardar cambios';}
+function recBorrar(id){if(!confirm('¿Eliminar este recurrente? (no borra los movimientos ya registrados)'))return;recurrentes=recurrentes.filter(x=>x.id!==id);recSave();renderRecurrentes();toast('🗑 Recurrente eliminado');
+  if(cloudOn()&&cloudVer>=CLOUD_MIN_VER)enqueue({t:'delete',id,e:'recurrentes'});}
+function recRegistradoMes(r,ym){return data.some(x=>x.agg===r.agg&&tipoDe(x)===r.tipo&&x.cat===r.cat&&Number(x.valor)===Number(r.valor)&&ymDe(x)===ym)}
+function recFecha(r,ym){if(!r.dia)return hoy();const [y,m]=ym.split('-').map(Number);const last=new Date(y,m,0).getDate();return `${y}-${String(m).padStart(2,'0')}-${String(Math.min(r.dia,last)).padStart(2,'0')}`;}
+function recAMovimiento(r,ym){return {id:uid(),agg:r.agg,tipo:r.tipo,fecha:recFecha(r,ym),cat:r.cat,obs:r.obs||'',valor:r.valor,ts:Date.now()}}
+function recRegistrar(id){const r=recurrentes.find(x=>x.id===id);if(!r)return;const rec=recAMovimiento(r,mesActual());data.push(rec);save();render();toast('✔ '+r.cat+' registrado');
+  if(cloudOn())enqueue({t:'upsert',r:rec,e:'gastos'});alertaPresupuesto(rec);}
+function registrarPendientes(){const ym=mesActual();const pend=recurrentes.filter(r=>!recRegistradoMes(r,ym));
+  if(!pend.length){toast('✔ Todos los recurrentes ya están registrados en '+mesLabel(ym));return}
+  if(!confirm('Se registrarán '+pend.length+' movimiento(s) de '+mesLabel(ym)+':\n\n'+pend.map(r=>'• '+AGG[r.agg]+' · '+r.cat+' · '+money(r.valor)).join('\n')+'\n\n¿Continuar?'))return;
+  pend.forEach(r=>{const rec=recAMovimiento(r,ym);data.push(rec);if(cloudOn())enqueue({t:'upsert',r:rec,e:'gastos'});});
+  save();render();toast('✔ '+pend.length+' movimiento(s) registrado(s)');}
+function renderRecurrentes(){const el=document.getElementById('recList');if(!el)return;const ym=mesActual();
+  if(!recurrentes.length){el.innerHTML='<div class="empty" style="grid-column:1/-1;padding:22px"><div class="big">⟳</div>Aún no hay recurrentes.<br>Crea los fijos del mes (arriendo, crédito, servicios, salario…) y regístralos con un clic.</div>';return}
+  const ord=recurrentes.slice().sort((a,b)=>(a.dia||99)-(b.dia||99)||a.cat.localeCompare(b.cat));
+  el.innerHTML=ord.map(r=>{const done=recRegistradoMes(r,ym);return `<div class="rec-item ${r.tipo} ${done?'done':''}">
+    <div class="rt">${esc(r.cat)}</div>
+    <div class="rm"><span class="badge ${r.agg}">${AGG[r.agg]}</span> <span class="badge ${r.tipo}">${r.tipo==='ingreso'?'INGRESO':'GASTO'}</span>${r.dia?' · día '+r.dia:''}${r.obs?' · '+esc(r.obs):''}</div>
+    <div class="rv" style="color:${r.tipo==='ingreso'?'var(--ingreso)':'var(--gris)'}">${money(r.valor)}</div>
+    <div class="ra">${done?'<span class="rec-done">✔ Registrado en '+mesLabel(ym)+'</span>':'<button class="btn btn-rojo btn-sm" onclick="recRegistrar(\''+r.id+'\')">Registrar</button>'}
+      <button class="icon-btn" title="Editar" onclick="recEditar('${r.id}')">✎</button><button class="icon-btn del" title="Eliminar" onclick="recBorrar('${r.id}')">🗑</button></div></div>`}).join('');}
+
+/* ================= PRESUPUESTOS ================= */
+function togglePreCfg(){const c=document.getElementById('preCfg');const abrir=c.style.display==='none';c.style.display=abrir?'block':'none';if(abrir)pintarPreCats();}
+function pintarPreCats(){const sel=document.getElementById('pCat');if(!sel)return;const usadas=[...new Set(data.filter(esEgreso).map(x=>x.cat))];const lista=[...new Set([...CAT_GASTO,...usadas])].sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML='<option value="">Seleccionar…</option>'+lista.map(c=>`<option>${esc(c)}</option>`).join('');}
+function preGuardar(){const cat=document.getElementById('pCat').value,persona=document.getElementById('pPersona').value,monto=parseNum(document.getElementById('pMonto').value);
+  if(!cat){toast('⚠ Elige la categoría');return}if(!monto){toast('⚠ Ingresa el tope');return}
+  let p=presupuestos.find(x=>x.cat===cat&&x.persona===persona);if(p){p.monto=monto;p.ts=Date.now();}else{p={id:uid(),cat,persona,monto,ts:Date.now()};presupuestos.push(p);}
+  preSave();renderResumen();document.getElementById('pMonto').value='';toast('✔ Tope guardado');
+  if(cloudOn()&&cloudVer>=CLOUD_MIN_VER)enqueue({t:'upsert',r:p,e:'presupuestos'});}
+function preBorrar(id){if(!confirm('¿Eliminar este tope?'))return;presupuestos=presupuestos.filter(x=>x.id!==id);preSave();renderResumen();
+  if(cloudOn()&&cloudVer>=CLOUD_MIN_VER)enqueue({t:'delete',id,e:'presupuestos'});}
+function renderPreList(){const el=document.getElementById('preList');if(!el)return;
+  el.innerHTML=presupuestos.length?presupuestos.slice().sort((a,b)=>a.cat.localeCompare(b.cat)).map(p=>`<div class="pre-row"><span><b>${esc(p.cat)}</b> · ${p.persona==='todos'?'Karen y Andrés':AGG[p.persona]}</span><span style="display:inline-flex;align-items:center;gap:8px">${money(p.monto)} <button class="icon-btn del" title="Eliminar" onclick="preBorrar('${p.id}')">🗑</button></span></div>`).join(''):'<div style="font-size:.8rem;color:var(--muted)">Sin topes definidos todavía.</div>';}
+function gastadoCat(cat,ym,persona){return data.filter(x=>esEgreso(x)&&x.cat===cat&&ymDe(x)===ym&&(persona==='todos'||x.agg===persona)).reduce((s,x)=>s+x.valor,0)}
+function renderPresupuesto(){const tbl=document.getElementById('tblPre');if(!tbl)return;renderPreList();
+  const ym=mesSel==='todos'?mesActual():mesSel;const lbl=document.getElementById('preMesLbl');if(lbl)lbl.textContent='· '+mesLabel(ym)+(personaSel==='todos'?'':' · '+AGG[personaSel]);
+  const lista=presupuestos.filter(p=>p.persona===personaSel).sort((a,b)=>a.cat.localeCompare(b.cat));
+  if(!lista.length){tbl.innerHTML='<tbody><tr><td><div class="empty" style="padding:22px"><div class="big">🎯</div>Sin topes para '+(personaSel==='todos'?'Karen y Andrés':AGG[personaSel])+'.<br>Usa “⚙ Configurar topes” para definirlos.</div></td></tr></tbody>';return}
+  let tp=0,tg=0;
+  tbl.innerHTML='<thead><tr><th>Categoría</th><th class="num">Tope</th><th class="num">Gastado</th><th class="num">Disponible</th><th style="width:32%">Avance</th></tr></thead><tbody>'+
+    lista.map(p=>{const g=gastadoCat(p.cat,ym,p.persona);const r=p.monto?g/p.monto:0;tp+=p.monto;tg+=g;const cls=r>=1?'pre-over':r>=.8?'pre-warn':'pre-ok';
+      return `<tr><td style="font-weight:600;color:var(--gris)">${esc(p.cat)}</td><td class="num">${money(p.monto)}</td><td class="num ${r>=1?'neg':''}">${money(g)}</td><td class="num ${p.monto-g<0?'neg':'pos'}">${money(p.monto-g)}</td><td><div class="pre-bar"><div class="${cls}" style="width:${Math.min(100,r*100)}%"></div></div><span class="pct">${Math.round(r*100)}%</span></td></tr>`}).join('')+
+    `</tbody><tfoot><tr><td>Total</td><td class="num">${money(tp)}</td><td class="num">${money(tg)}</td><td class="num ${tp-tg<0?'neg':'pos'}">${money(tp-tg)}</td><td>${tp?Math.round(tg/tp*100)+'% del tope global':''}</td></tr></tfoot>`;}
+function alertaPresupuesto(rec){if(!rec||tipoDe(rec)!=='gasto')return;const ym=ymDe(rec);
+  presupuestos.filter(p=>p.cat===rec.cat&&(p.persona==='todos'||p.persona===rec.agg)).forEach((p,i)=>{const g=gastadoCat(p.cat,ym,p.persona);const r=p.monto?g/p.monto:0;const quien=p.persona==='todos'?'':' ('+AGG[p.persona]+')';
+    if(r>=1)setTimeout(()=>toast('🚨 '+p.cat+quien+': tope del mes superado ('+Math.round(r*100)+'%)'),900+i*2600);
+    else if(r>=.8)setTimeout(()=>toast('⚠ '+p.cat+quien+': vas en '+Math.round(r*100)+'% del tope'),900+i*2600);});}
+
+/* ================= CIERRE DE MES ================= */
+function mesAnterior(ym){let [y,m]=ym.split('-').map(Number);m--;if(m===0){m=12;y--;}return `${y}-${String(m).padStart(2,'0')}`}
+function abrirCierre(){
+  const ym=mesSel==='todos'?mesActual():mesSel,ymp=mesAnterior(ym);
+  const per=x=>personaSel==='todos'||x.agg===personaSel;
+  const G=data.filter(x=>esEgreso(x)&&per(x)),I=data.filter(x=>esIngreso(x)&&per(x));
+  const gm=G.filter(x=>ymDe(x)===ym),gp=G.filter(x=>ymDe(x)===ymp),im=I.filter(x=>ymDe(x)===ym),ip=I.filter(x=>ymDe(x)===ymp);
+  if(!gm.length&&!im.length&&!negocio.some(x=>ymDe(x)===ym)){toast('⚠ No hay movimientos en '+mesLabel(ym));return}
+  const sum=a=>a.reduce((s,x)=>s+x.valor,0);
+  const porP=k=>({g:sum(gm.filter(x=>x.agg===k)),i:sum(im.filter(x=>x.agg===k))});const K=porP('karen'),A=porP('andres');
+  const TG=sum(gm),TI=sum(im),TGp=sum(gp),TIp=sum(ip);
+  const varPct=(a,b)=>b?Math.round((a-b)/b*1000)/10:null;
+  const fv=v=>v===null?'—':`<span style="color:${v>0?'var(--rojo)':v<0?'var(--ingreso)':'inherit'}">${v>0?'↑ +':v<0?'↓ ':''}${Math.abs(v).toLocaleString('es-CO')}%</span>`;
+  const cats={};gm.forEach(x=>{(cats[x.cat]=cats[x.cat]||{t:0,p:0});cats[x.cat].t+=x.valor});gp.forEach(x=>{(cats[x.cat]=cats[x.cat]||{t:0,p:0});cats[x.cat].p+=x.valor});
+  const ordC=Object.keys(cats).sort((a,b)=>cats[b].t-cats[a].t);
+  const preDe=c=>{const p=presupuestos.find(q=>q.cat===c&&q.persona===personaSel);return p?p.monto:0};
+  const nm=negocio.filter(x=>ymDe(x)===ym),np=negocio.filter(x=>ymDe(x)===ymp),tn=negTotales(nm),tnp=negTotales(np);
+  const ahora=new Date(),quien=personaSel==='todos'?'Karen y Andrés':AGG[personaSel];
+  const logo='<svg width="52" height="52" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2c333a" stroke="#A90F0F" stroke-width="2"/><path d="M30 50c0-9 13-9 20 0s20 9 20 0-13-9-20 0-20 9-20 0z" fill="none" stroke="#A90F0F" stroke-width="8" stroke-linecap="round"/></svg>';
+  document.getElementById('cierre').innerHTML=`
+    <div class="rb-head">${logo}<div><h2>Cierre de mes · ${mesLabel(ym)}</h2><div style="font-size:.78rem;color:var(--muted)">GROUPCOS · ${quien}</div></div>
+      <div class="meta">Generado: ${ahora.toLocaleString('es-CO',{dateStyle:'long',timeStyle:'short'})}<br>Comparado con ${mesLabel(ymp)}</div></div>
+    <div class="cz-grid">
+      <div class="rb-tot"><div class="l">Gastos del mes</div><div class="v">${money(TG)}</div><div class="pct">${fv(varPct(TG,TGp))} vs ${mesLabel(ymp)}</div></div>
+      <div class="rb-tot"><div class="l">Ingresos</div><div class="v" style="color:var(--ingreso)">${money(TI)}</div><div class="pct">${fv(varPct(TI,TIp))} vs ${mesLabel(ymp)}</div></div>
+      <div class="rb-tot t"><div class="l">Neto del mes</div><div class="v">${money(TI-TG)}</div></div>
+      <div class="rb-tot"><div class="l">% de ingresos gastado</div><div class="v">${TI?Math.round(TG/TI*100)+'%':'—'}</div></div>
+    </div>
+    ${personaSel==='todos'?`<div class="rb-sec">Por persona</div><table><thead><tr><th>Persona</th><th style="text-align:right">Gastos</th><th style="text-align:right">Ingresos</th><th style="text-align:right">Neto</th></tr></thead><tbody>
+      <tr><td>Karen</td><td style="text-align:right">${money(K.g)}</td><td style="text-align:right">${money(K.i)}</td><td style="text-align:right;font-weight:700">${money(K.i-K.g)}</td></tr>
+      <tr><td>Andrés</td><td style="text-align:right">${money(A.g)}</td><td style="text-align:right">${money(A.i)}</td><td style="text-align:right;font-weight:700">${money(A.i-A.g)}</td></tr>
+      <tr><td style="font-weight:800">Total</td><td style="text-align:right;font-weight:800">${money(TG)}</td><td style="text-align:right;font-weight:800">${money(TI)}</td><td style="text-align:right;font-weight:800">${money(TI-TG)}</td></tr></tbody></table>`:''}
+    <div class="rb-sec">Gastos por categoría · comparativo y presupuesto</div>
+    ${ordC.length?`<table><thead><tr><th>Categoría</th><th style="text-align:right">${mesLabel(ymp)}</th><th style="text-align:right">${mesLabel(ym)}</th><th style="text-align:right">Var.</th><th style="text-align:right">% del mes</th><th style="text-align:right">Tope</th><th>Estado</th></tr></thead><tbody>${ordC.map(c=>{const r=cats[c];const tope=preDe(c);const ratio=tope?r.t/tope:0;
+      const est=!tope?'<span style="color:var(--muted)">sin tope</span>':ratio>=1?'<b style="color:var(--rojo)">Superado · '+Math.round(ratio*100)+'%</b>':ratio>=.8?'<b style="color:var(--warn)">Al límite · '+Math.round(ratio*100)+'%</b>':'<span style="color:var(--ingreso)">OK · '+Math.round(ratio*100)+'%</span>';
+      return `<tr><td>${esc(c)}</td><td style="text-align:right">${r.p?money(r.p):'—'}</td><td style="text-align:right;font-weight:600">${r.t?money(r.t):'—'}</td><td style="text-align:right">${fv(varPct(r.t,r.p))}</td><td style="text-align:right">${pct(r.t,TG)}%</td><td style="text-align:right">${tope?money(tope):'—'}</td><td>${est}</td></tr>`}).join('')}</tbody></table>`:'<p class="pct">Sin gastos en el mes.</p>'}
+    <div class="rb-sec">Negocio · ${mesLabel(ym)}</div>
+    ${nm.length?`<div class="cz-grid"><div class="rb-tot"><div class="l">Ingresos</div><div class="v" style="color:var(--ingreso)">${money(tn.ingreso)}</div><div class="pct">${fv(varPct(tn.ingreso,tnp.ingreso))}</div></div><div class="rb-tot"><div class="l">Costos</div><div class="v" style="color:var(--costo)">${money(tn.costo)}</div><div class="pct">${fv(varPct(tn.costo,tnp.costo))}</div></div><div class="rb-tot t"><div class="l">Ganancia</div><div class="v">${money(tn.ganancia)}</div></div><div class="rb-tot"><div class="l">Margen</div><div class="v">${(Math.round(tn.margen*10)/10).toLocaleString('es-CO')}%</div></div></div>
+      <p class="pct" style="margin-top:-6px">Nequi: ingresos ${money(tn.medios.nequi.ingreso)} · costos ${money(tn.medios.nequi.costo)} · neto <b>${money(tn.medios.nequi.ingreso-tn.medios.nequi.costo)}</b> &nbsp;|&nbsp; Efectivo: ingresos ${money(tn.medios.efectivo.ingreso)} · costos ${money(tn.medios.efectivo.costo)} · neto <b>${money(tn.medios.efectivo.ingreso-tn.medios.efectivo.costo)}</b></p>`:'<p class="pct">Sin movimientos de negocio en el mes.</p>'}
+    <div class="rb-note">Cierre generado automáticamente · Valores en pesos colombianos (COP) · GROUPCOS</div>`;
+  document.getElementById('modalCierre').classList.add('show');
+}
+function imprimirCierre(){document.body.classList.add('print-cierre');window.print();setTimeout(()=>document.body.classList.remove('print-cierre'),600);}
+
 /* ================= RECIBO ================= */
 function abrirRecibo(){
   const base=data.filter(esGasto);
@@ -853,7 +1062,7 @@ function normFecha(v){
 const CFGKEY='gastos_cloud_cfg', OBKEY='gastos_cloud_outbox';
 const CLOUD_DEFAULT_URL='https://script.google.com/macros/s/AKfycbwWDugMIPxK9rWFYOFZHnxmULcPanW8VT-UD2nB4YXisA2PnvLgT2oc9-l7bvi0J4MP/exec'; // Web App publicado (sin clave)
 let CLOUD={on:false,url:'',clave:''}; let OUTBOX=[]; let polling=null; let syncing=false;
-const CLOUD_MIN_VER=3; let cloudVer=0, avisoVerMostrado=false;
+const CLOUD_MIN_VER=4; let cloudVer=0, avisoVerMostrado=false;
 function loadCfg(){try{CLOUD=Object.assign(CLOUD,JSON.parse(localStorage.getItem(CFGKEY))||{})}catch(e){}try{OUTBOX=JSON.parse(localStorage.getItem(OBKEY))||[]}catch(e){OUTBOX=[]}
   if(!CLOUD.url)CLOUD.url=CLOUD_DEFAULT_URL;}
 /* Enlace de configuración: ?clave=...  (opcional &url=...) → se guarda en el equipo y se limpia de la barra */
@@ -908,11 +1117,16 @@ async function pull(){if(!cloudOn()||syncing)return;if(OUTBOX.length){return flu
   try{
     const jg=await api('cargar',null,'gastos');const mg=mezclarGastos((jg.datos||[]).map(r=>({...r,fecha:normFecha(r.fecha)})));data=mg.out;save();
     const jn=await api('cargar',null,'negocio');negocio=(jn.datos||[]).map(r=>({...r,fecha:normFecha(r.fecha)}));negSave();
+    await sincConfig('recurrentes');await sincConfig('presupuestos');
     render();renderNegocio();setEstado('Conectado','ok');
     if(mg.reenviar.length){mg.reenviar.forEach(r=>OUTBOX.push({t:'upsert',r,e:'gastos'}));saveOutbox();flush();}
   }catch(e){setEstado('Sin conexión','off');}}
 function startPoll(){clearInterval(polling);if(cloudOn())polling=setInterval(pull,20000);}
 function setArr(ent,arr){if(ent==='gastos'){data=arr;save();render();}else{negocio=arr;negSave();renderNegocio();}}
+const ENT_CFG={recurrentes:{get:()=>recurrentes,set:v=>{recurrentes=v;recSave();renderRecurrentes();}},presupuestos:{get:()=>presupuestos,set:v=>{presupuestos=v;preSave();renderResumen();}}};
+function numCfg(r){const o={...r};['valor','monto','dia','ts'].forEach(k=>{if(k in o)o[k]=Number(o[k])||0});return o}
+async function sincConfig(ent){if(cloudVer<CLOUD_MIN_VER)return;const j=await api('cargar',null,ent);const rem=(j.datos||[]).map(numCfg);const loc=ENT_CFG[ent].get();
+  if(rem.length===0&&loc.length>0){await api('reemplazar',{datos:loc},ent);}else{ENT_CFG[ent].set(rem);}}
 async function sincEntidad(ent,nombre){
   const j=await api('cargar',null,ent);
   let remoto=(j.datos||[]).map(r=>({...r,fecha:normFecha(r.fecha)}));
@@ -925,7 +1139,7 @@ async function sincEntidad(ent,nombre){
   if(reenviar.length){reenviar.forEach(r=>OUTBOX.push({t:'upsert',r,e:'gastos'}));saveOutbox();}
 }
 async function conectar(){if(!cloudOn()){setEstado('Desactivado','off');return;}setEstado('Conectando…','sync');
-  try{await sincEntidad('gastos','gastos');await sincEntidad('negocio','negocio');setEstado('Conectado','ok');startPoll();if(OUTBOX.length)flush();}
+  try{await sincEntidad('gastos','gastos');await sincEntidad('negocio','negocio');await sincConfig('recurrentes');await sincConfig('presupuestos');setEstado('Conectado','ok');startPoll();if(OUTBOX.length)flush();}
   catch(e){setEstado('Sin conexión','off');}}
 function guardarCfgNube(){CLOUD.url=(document.getElementById('cfgUrl').value.trim())||CLOUD_DEFAULT_URL;CLOUD.clave=document.getElementById('cfgClave').value.trim();CLOUD.on=document.getElementById('cfgOn').checked||!!CLOUD.clave;document.getElementById('cfgOn').checked=CLOUD.on;saveCfg();
   if(CLOUD.on){if(!CLOUD.clave){toast('⚠ Escribe la clave');return;}toast('✔ Configuración guardada');conectar();}else{clearInterval(polling);setEstado('Desactivado','off');toast('Sincronización desactivada');}}
@@ -952,7 +1166,7 @@ async function instalarApp(){if(!deferredPrompt){toast('Usa el menú del navegad
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
 
 /* ================= Init ================= */
-load(); negLoad(); loadCfg(); leerEnlaceConfig();
+load(); negLoad(); recLoad(); preLoad(); loadCfg(); leerEnlaceConfig();
 document.getElementById('fFecha').value=hoy();
 document.getElementById('nFecha').value=hoy();
 pintarCats('gasto',false);
